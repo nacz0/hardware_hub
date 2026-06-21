@@ -39,8 +39,15 @@ can grow with implementation evidence.
 
 ### Prompt
 
-Date:
+Date: 2026-06-22
 
-Summary:
+Summary: Create the FastAPI backend scaffold inside `backend/` only.
 
-Outcome:
+Outcome: Added a minimal FastAPI app with SQLite connection helper,
+`requirements.txt`, CORS for the local Vue frontend at
+`http://localhost:5173`, and `GET /health` returning `{"status": "ok"}`.
+Verified the health endpoint with FastAPI's test client.
+
+Correction: moved backend ignore rules from `backend/.gitignore` to the root
+`.gitignore` because this project is a monorepo, and documented that decision
+in `docs/DECISIONS.md`.

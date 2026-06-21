@@ -15,3 +15,4 @@ implementation when trade-offs become concrete.
 | Deterministic checks before LLM | Critical data findings should be explainable and testable. | The first AI feature is partly rule-based by design. |
 | Vercel + Railway targets | Practical deployment path for frontend and backend. | Railway + SQLite is demo-grade only. |
 | GitHub Actions CI | Keeps tests/build checks visible. | Initial CI will be basic. |
+| Single root `.gitignore` | This is a monorepo, so ignore rules live at the repository root instead of inside `backend/`. | Package-specific generated files need scoped paths when necessary. |
