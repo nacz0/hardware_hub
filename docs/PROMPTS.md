@@ -65,3 +65,22 @@ short code comment explaining that dirty seed data is kept for the auditor.
 Correction: moved the hardware seed list out of the database helper into
 `backend/app/seed_data.py`, leaving `backend/app/database.py` responsible for
 schema creation, idempotent seeding, and hardware reads.
+
+### Prompt
+
+Summary: Implement simple local authentication and authorization inside
+`backend/` using bcrypt password hashing, JWT access tokens, admin/user roles,
+initial admin seeding from environment variables, and protected auth/admin
+endpoints.
+
+Outcome: Added `bcrypt` and `PyJWT` backend dependencies. Added a `users` table
+with hashed passwords and roles. Added initial admin seeding, `POST
+/auth/login`, `GET /auth/me`, and admin-only `POST /admin/users`. The backend
+enforces roles server-side, rejects invalid logins with `401`, requires a
+32-byte `JWT_SECRET`, validates emails, caps bcrypt password input length, and
+does not promote an existing user during admin seeding.
+
+Correction: refactored user persistence and authentication logic out of
+`backend/app/database.py` into `backend/app/users.py`. Verified the admin/user
+flow, invalid login, role denial, invalid email, overlong password, JWT secret
+startup failures, and non-promoting seed behavior.

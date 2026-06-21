@@ -15,6 +15,8 @@ def get_connection() -> sqlite3.Connection:
 
 
 def initialize_database() -> None:
+    from app.users import initialize_users_table, seed_initial_admin
+
     with get_connection() as connection:
         connection.execute(
             """
@@ -31,7 +33,10 @@ def initialize_database() -> None:
             )
             """
         )
+
+        initialize_users_table(connection)
         seed_hardware(connection)
+        seed_initial_admin(connection)
 
 
 def list_hardware() -> list[dict]:
