@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import initialize_database
+from app.database import initialize_database, list_hardware
 
 
 @asynccontextmanager
@@ -26,3 +26,8 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/hardware")
+def hardware() -> list[dict]:
+    return list_hardware()

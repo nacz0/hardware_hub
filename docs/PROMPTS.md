@@ -39,8 +39,6 @@ can grow with implementation evidence.
 
 ### Prompt
 
-Date: 2026-06-22
-
 Summary: Create the FastAPI backend scaffold inside `backend/` only.
 
 Outcome: Added a minimal FastAPI app with SQLite connection helper,
@@ -51,3 +49,19 @@ Verified the health endpoint with FastAPI's test client.
 Correction: moved backend ignore rules from `backend/.gitignore` to the root
 `.gitignore` because this project is a monorepo, and documented that decision
 in `docs/DECISIONS.md`.
+
+### Prompt
+
+Summary: Implement the backend hardware database model and seed import using
+SQLite, while preserving intentionally dirty seed values for later AI auditing.
+
+Outcome: Added a `hardware` table initialized by the FastAPI backend with an
+internal database primary key and preserved source identifiers as
+`external_id`, allowing duplicate seed IDs to remain visible. Added
+`GET /hardware` to return all seeded rows, including invalid dates, unknown
+statuses, missing brands, notes, assigned users, and history values. Added a
+short code comment explaining that dirty seed data is kept for the auditor.
+
+Correction: moved the hardware seed list out of the database helper into
+`backend/app/seed_data.py`, leaving `backend/app/database.py` responsible for
+schema creation, idempotent seeding, and hardware reads.
