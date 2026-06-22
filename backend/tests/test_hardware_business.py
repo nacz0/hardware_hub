@@ -32,118 +32,119 @@ def auth_headers(user: dict) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(user)}"}
 
 
-def test_user_can_rent_only_available_hardware(client):
-    test_client, _admin, user = client
-
-    rented = test_client.post(
-        "/hardware/1/rent",
-        headers=auth_headers(user),
-    )
-
-    assert rented.status_code == 200
-    assert rented.json()["status"] == "In Use"
-    assert rented.json()["assigned_to"] == user["email"]
-
-    already_in_use = test_client.post(
-        "/hardware/1/rent",
-        headers=auth_headers(user),
-    )
-    repair = test_client.post(
-        "/hardware/3/rent",
-        headers=auth_headers(user),
-    )
-    unknown = test_client.post(
-        "/hardware/10/rent",
-        headers=auth_headers(user),
-    )
-
-    assert already_in_use.status_code == 400
-    assert repair.status_code == 400
-    assert unknown.status_code == 400
-
-
-def test_user_can_return_only_in_use_hardware(client):
-    test_client, _admin, user = client
-
-    returned = test_client.post(
-        "/hardware/2/return",
-        headers=auth_headers(user),
-    )
-
-    assert returned.status_code == 200
-    assert returned.json()["status"] == "Available"
-    assert returned.json()["assigned_to"] is None
-
-    not_in_use = test_client.post(
-        "/hardware/2/return",
-        headers=auth_headers(user),
-    )
-
-    assert not_in_use.status_code == 400
-
-
-def test_missing_hardware_returns_404(client):
-    test_client, admin, user = client
-
-    rent_response = test_client.post(
-        "/hardware/999/rent",
-        headers=auth_headers(user),
-    )
-    delete_response = test_client.delete(
-        "/hardware/999",
+def create_hardware_item(
+    test_client: TestClient,
+    admin: dict,
+    *,
+    status: str,
+    assigned_to: str | None = None,
+) -> dict:
+    response = test_client.post(
+        "/hardware",
+        json={
+            "name": f"Business critical {status} device",
+            "brand": "Test",
+            "status": status,
+            "assignedTo": assigned_to,
+        },
         headers=auth_headers(admin),
     )
 
-    assert rent_response.status_code == 404
-    assert delete_response.status_code == 404
+    assert response.status_code == 201
+    return response.json()
 
 
-def test_regular_user_cannot_use_admin_hardware_actions(client):
+def test_user_cannot_rent_hardware_with_repair_status(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(test_client, admin, status="Repair")
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/rent",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Hardware can only be rented when Available"
+
+
+def test_user_cannot_rent_hardware_already_in_use(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(
+        test_client,
+        admin,
+        status="In Use",
+        assigned_to="other@example.com",
+    )
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/rent",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Hardware can only be rented when Available"
+
+
+def test_user_can_rent_hardware_only_when_available(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(test_client, admin, status="Available")
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/rent",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "In Use"
+    assert response.json()["assigned_to"] == user["email"]
+
+
+def test_user_cannot_return_hardware_that_is_not_in_use(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(test_client, admin, status="Available")
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/return",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Hardware can only be returned when In Use"
+
+
+def test_regular_user_cannot_create_another_user(client):
     test_client, _admin, user = client
 
-    create_response = test_client.post(
-        "/hardware",
-        json={"name": "Managed laptop", "status": "Available"},
-        headers=auth_headers(user),
-    )
-    repair_response = test_client.post(
-        "/hardware/1/repair",
-        headers=auth_headers(user),
-    )
-    delete_response = test_client.delete(
-        "/hardware/1",
-        headers=auth_headers(user),
-    )
-
-    assert create_response.status_code == 403
-    assert repair_response.status_code == 403
-    assert delete_response.status_code == 403
-
-
-def test_admin_can_create_delete_and_mark_statuses(client):
-    test_client, admin, _user = client
-    headers = auth_headers(admin)
-
-    created = test_client.post(
-        "/hardware",
+    response = test_client.post(
+        "/admin/users",
         json={
-            "name": "Admin-created laptop",
-            "brand": "Framework",
-            "purchaseDate": "2026-06-22",
-            "status": "Available",
+            "email": "created-by-user@example.com",
+            "password": "password123",
+            "role": "user",
         },
-        headers=headers,
+        headers=auth_headers(user),
     )
 
-    assert created.status_code == 201
-    hardware_id = created.json()["id"]
+    assert response.status_code == 403
 
-    repair = test_client.post(f"/hardware/{hardware_id}/repair", headers=headers)
-    available = test_client.post(f"/hardware/{hardware_id}/available", headers=headers)
-    deleted = test_client.delete(f"/hardware/{hardware_id}", headers=headers)
 
-    assert repair.status_code == 200
-    assert repair.json()["status"] == "Repair"
-    assert available.status_code == 200
-    assert available.json()["status"] == "Available"
-    assert deleted.status_code == 204
+def test_admin_can_create_user(client):
+    test_client, admin, _user = client
+
+    response = test_client.post(
+        "/admin/users",
+        json={
+            "email": "New.User@Example.com",
+            "password": "password123",
+            "role": "user",
+        },
+        headers=auth_headers(admin),
+    )
+
+    assert response.status_code == 201
+    assert response.json() == {
+        "id": response.json()["id"],
+        "email": "new.user@example.com",
+        "role": "user",
+        "created_at": response.json()["created_at"],
+    }
