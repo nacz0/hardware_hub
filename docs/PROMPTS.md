@@ -84,3 +84,36 @@ Correction: refactored user persistence and authentication logic out of
 `backend/app/database.py` into `backend/app/users.py`. Verified the admin/user
 flow, invalid login, role denial, invalid email, overlong password, JWT secret
 startup failures, and non-promoting seed behavior.
+
+### Prompt
+
+Summary: Implement backend hardware rental and return business logic inside
+`backend/`.
+
+Outcome: Added server-side endpoints for renting, returning, marking repair,
+marking available, creating hardware, and deleting hardware. Rental is allowed
+only from `Available`, return is allowed only from `In Use`, rent assigns the
+current user's email, and return clears assignment. Admin-only actions are
+guarded on the backend, invalid transitions return `400`, missing permissions
+return `403`, and missing hardware returns `404`. Added focused FastAPI tests
+for the core business rules and added test dependencies.
+
+Correction: tightened rent/return mutations to use conditional status updates
+so the expected source status is enforced at database update time, not only by
+an earlier route check.
+
+### Prompt
+
+Summary: Refactor the hardware rental and return implementation so `main.py`
+stays small and future updates have clear module ownership.
+
+Outcome: Moved JWT token creation, current-user lookup, and admin dependency
+logic into `backend/app/auth.py`. Moved hardware request models, routes, and
+business operations into `backend/app/hardware.py`, then registered the router
+from `main.py`. `main.py` now focuses on FastAPI app setup, health, login,
+current-user, and admin user creation endpoints. Updated tests to import token
+creation from the auth module.
+
+Correction: documented the convention in `docs/DECISIONS.md`: keep `main.py`
+tidy and split routes, auth, and business logic into focused modules when
+behavior grows.

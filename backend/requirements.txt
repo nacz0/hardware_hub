@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 bcrypt
 PyJWT
+httpx
+pytest

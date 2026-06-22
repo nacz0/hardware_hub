@@ -16,3 +16,4 @@ implementation when trade-offs become concrete.
 | Vercel + Railway targets | Practical deployment path for frontend and backend. | Railway + SQLite is demo-grade only. |
 | GitHub Actions CI | Keeps tests/build checks visible. | Initial CI will be basic. |
 | Single root `.gitignore` | This is a monorepo, so ignore rules live at the repository root instead of inside `backend/`. | Package-specific generated files need scoped paths when necessary. |
+| Keep `main.py` tidy | FastAPI app setup should stay small; split routes, auth, and business logic into focused modules such as `hardware.py` when behavior grows. | More files, but clearer ownership for future updates. |

@@ -63,6 +63,124 @@ def list_hardware() -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def get_hardware(hardware_id: int) -> dict | None:
+    initialize_database()
+
+    with get_connection() as connection:
+        row = connection.execute(
+            """
+            SELECT
+                id,
+                external_id,
+                name,
+                brand,
+                purchase_date,
+                status,
+                notes,
+                assigned_to,
+                history
+            FROM hardware
+            WHERE id = ?
+            """,
+            (hardware_id,),
+        ).fetchone()
+
+    return dict(row) if row else None
+
+
+def create_hardware(data: dict) -> dict:
+    initialize_database()
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO hardware (
+                external_id,
+                name,
+                brand,
+                purchase_date,
+                status,
+                notes,
+                assigned_to,
+                history
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                data.get("external_id"),
+                data["name"],
+                data.get("brand"),
+                data.get("purchase_date"),
+                data.get("status"),
+                data.get("notes"),
+                data.get("assigned_to"),
+                data.get("history"),
+            ),
+        )
+
+    hardware = get_hardware(cursor.lastrowid)
+    if hardware is None:
+        raise RuntimeError("Created hardware could not be loaded")
+    return hardware
+
+
+def delete_hardware(hardware_id: int) -> bool:
+    initialize_database()
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "DELETE FROM hardware WHERE id = ?",
+            (hardware_id,),
+        )
+
+    return cursor.rowcount > 0
+
+
+def update_hardware_status(
+    hardware_id: int,
+    status_value: str,
+    assigned_to: str | None,
+) -> dict | None:
+    initialize_database()
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE hardware
+            SET status = ?, assigned_to = ?
+            WHERE id = ?
+            """,
+            (status_value, assigned_to, hardware_id),
+        )
+
+    if cursor.rowcount == 0:
+        return None
+    return get_hardware(hardware_id)
+
+
+def transition_hardware_status(
+    hardware_id: int,
+    expected_status: str,
+    status_value: str,
+    assigned_to: str | None,
+) -> dict | None:
+    initialize_database()
+
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE hardware
+            SET status = ?, assigned_to = ?
+            WHERE id = ? AND status = ?
+            """,
+            (status_value, assigned_to, hardware_id, expected_status),
+        )
+
+    if cursor.rowcount == 0:
+        return None
+    return get_hardware(hardware_id)
+
+
 def seed_hardware(connection: sqlite3.Connection) -> None:
     row_count = connection.execute("SELECT COUNT(*) FROM hardware").fetchone()[0]
     if row_count > 0:
