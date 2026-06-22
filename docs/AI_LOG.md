@@ -1,104 +1,130 @@
 # AI Development Log
 
-Short log of planned and actual AI usage. Add concrete examples as the project
-is implemented.
+This project used AI assistance as an engineering accelerator. AI output was not
+treated as production proof; code, tests, browser behavior, and assignment scope
+were manually reviewed.
 
-## Tools
+## Tools Used
 
-- Codex: planning, docs, implementation help, tests, review.
-- Figma MCP: UI guidance for dashboard/admin flows.
-- Chrome DevTools MCP: browser validation after frontend exists.
-- OpenAI API: runtime Inventory Auditor.
+- Codex: planning, implementation, refactoring, tests, documentation, and review.
+- Figma MCP: attempted source-file inspection, but it was not used for design
+  extraction because the connected account was not authorized for that file.
+- Chrome DevTools MCP: copied the published Figma-site design direction,
+  browser smoke testing, deployed app validation, console and network checks.
+- OpenAI API: runtime Inventory Auditor integration through the backend.
 
-## Workflow
+## How AI Was Used
 
-AI may assist with implementation, but output is reviewed before acceptance.
-Tests, assignment requirements, and manual browser checks remain the source of
-truth.
+Codex helped break the work into a small FastAPI/Vue MVP, draft the backend API
+shape, implement route modules, write critical pytest coverage, build frontend
+views, and keep the docs aligned with the implementation.
 
-## Inventory Auditor
+Important AI-generated decisions were reviewed against the assignment. One early
+AI draft over-expanded the inventory model with generic asset-management fields.
+That was corrected back to the assignment fields: `name`, `brand`,
+`purchaseDate`, `status`, `notes`, `assignedTo`, and `history`.
 
-The backend should run deterministic checks first, then send a compact inventory
-summary to the OpenAI API for an admin-readable audit.
+## Figma MCP Authorization Gap
 
-The auditor can flag duplicate IDs, invalid dates, missing brands, invalid
-statuses, unsafe available items, and `In Use` items without `assignedTo`.
+Figma MCP was not used to copy or inspect the actual source design because the
+connected account did not have authorization for the Figma file. That means no
+nodes, component structure, variables, or design-system metadata were imported
+from Figma MCP.
 
-The auditor is advisory. It must not update records automatically.
+The useful outcome was discovering that limitation early and avoiding a false
+claim that the app was generated from or directly synchronized with the Figma
+file.
 
-## Figma MCP Plan
+## How Chrome DevTools MCP Helped
 
-Use for layout guidance only:
+Chrome DevTools MCP was used for practical browser validation:
 
-- Dashboard columns: Name, Brand, Purchase Date, Status
-- Admin hardware/user management screens
-- Simple internal-tool usability checks
+- Opening the published Figma site and copying the visible design direction:
+  standalone login, fixed sidebar, table-first hardware view, compact status
+  badges, and a simple admin table.
+- Login as admin and regular user.
+- Dashboard loading, filtering, sorting, rent, and return flows.
+- Admin panel access control and hardware creation.
+- AI Auditor request and fallback display.
+- Deployed app smoke checks after Vercel/Railway configuration.
+- Console and network errors during UI actions.
 
-### Figma/Chrome UI Review
+It found a concrete deployed bug: Admin Panel -> Add hardware failed with
+`U.trim is not a function` when numeric `Source ID` was filled. The fix was to
+normalize optional numeric input before trimming in the Vue admin form.
 
-Direct Figma MCP inspection of the Make file was blocked because the connected
-account did not have edit access. Workaround: inspect the published Figma site
-with the Chrome-backed browser MCP at `https://serene-mural-33249528.figma.site/`.
+So the design workflow was: Figma MCP attempted but blocked by authorization;
+Chrome DevTools MCP used to view the published Figma-site mock; then the Vue UI
+was manually adjusted to match the visible layout patterns.
 
-Observed wireframe details:
+## How the OpenAI API Was Used
 
-- Standalone centered login card with email/password fields and a dark login
-  button.
-- Authenticated app shell with a fixed left sidebar, `Hardware Manager` brand,
-  navigation items, and bottom logout.
-- Table-first hardware list with compact rows, status badges, and rent actions.
-- Admin table with serial numbers, status badges, and compact action controls.
+The backend Inventory Auditor runs deterministic checks first. If
+`OPENAI_API_KEY` is configured and `OPENAI_AUDIT_MOCK` is not enabled, it calls
+OpenAI through the official Python SDK and requests a strict structured JSON
+report.
 
-Applied only layout guidance from this review. Existing Vue API calls and
-backend behavior remained the source of truth.
+The model receives a minimized inventory view and deterministic findings. Raw
+`assigned_to`, `notes`, and `history` values are not sent; the backend sends
+booleans such as whether an assignee exists and whether damage-related text was
+detected.
 
-## Chrome DevTools MCP Plan
+The OpenAI response is advisory only. The backend validates it against a Pydantic
+schema, merges deterministic findings back in, and falls back to deterministic
+output if the API key is missing, mock mode is enabled, the request fails, or the
+model returns invalid structure.
 
-Use after the frontend runs:
+## Concrete AI Correction Example
 
-- Login flow
-- Dashboard filtering/sorting
-- Rent/return requests
-- Admin-only access
-- Console and network errors
+Issue found during AI-assisted browser testing:
 
-## AI Correction Example
+- The deployed admin add-hardware flow crashed when `Source ID` was entered as a
+  number.
+- The browser showed a `trim` error because form normalization assumed text.
+- The fix updated `optionalNumber` to convert the value with `String(value ?? '')`
+  before trimming.
+- Verification: frontend production build passed, and a deployed Chrome MCP
+  retest created a temporary hardware row with numeric source ID successfully.
 
-- AI-assisted review: Chrome DevTools MCP smoke-tested login, dashboard
-  rendering, filtering/sorting, rent/return actions, admin visibility, and the
-  AI auditor request against the running app.
-- Issue found: dirty seed rows were valid auditor input, but two core workflows
-  needed tighter handling: invalid/missing purchase dates sorted ahead of valid
-  dates in descending order, and an `In Use` row without `assignedTo` exposed a
-  usable return action.
-- Manual correction: kept dirty records intact, made dashboard date sorting
-  accept only strict `YYYY-MM-DD` dates and place invalid/missing dates after
-  valid dates, disabled unassigned returns in the UI, and rejected unassigned
-  returns in the backend.
-- Verification: `python -m pytest backend\tests` passed with 14 tests, and
-  `npm run build` passed from `frontend/`.
+Separate manual testing later found a more important authorization gap: any
+authenticated user could return any assigned `In Use` device. That bug was not
+caught by the earlier AI-assisted tests. The backend now limits regular users to
+returning devices assigned to their own email, while admins can return any
+assigned device. Regression tests were added.
 
-## Deployed Chrome MCP Regression
+## What Was Manually Reviewed
 
-- Chrome DevTools MCP found deployed Admin Panel -> Add hardware failed with
-  `U.trim is not a function` when `Source ID` was filled.
-- Fixed `AdminView.vue` by normalizing optional numeric input before trimming;
-  `npm run build` passed from `frontend/`.
-- Deployed retest created a temporary row with numeric source ID and no trim
-  error. Cleanup briefly blocked on the browser confirm dialog during Chrome MCP
-  use; after confirmation, a fresh inventory check showed the row was gone.
+- Assignment scope and allowed hardware fields/statuses.
+- Backend auth, role guards, rent/return transitions, and AI audit route.
+- Frontend role gating and visible user flows.
+- Dirty seed data handling.
+- Test coverage for critical rental, return, admin, and AI audit behavior.
+- Production build output for the frontend.
+- Browser behavior for login, dashboard, admin, and auditor views.
+- Documentation claims, especially around production readiness.
 
-## Manual Testing Gap
+## Data Strategy
 
-- Manual testing later found a return-authorization bug: any authenticated user
-  could return any assigned `In Use` device.
-- This was not caught by the earlier extensive AI-assisted testing and Chrome
-  MCP smoke checks. Those checks covered login, filtering/sorting, happy-path
-  rent/return behavior, admin visibility, AI Auditor, unassigned dirty rows,
-  and deployed admin workflows, but missed the cross-user ownership case.
-- Correction: backend return authorization now limits regular users to devices
-  assigned to their own email, while admins can return any assigned `In Use`
-  device. The dashboard Return button mirrors the same client-side rule.
-- Verification: added regression tests for self-return, cross-user denial, and
-  admin return. `python -m pytest backend\tests` passed with 17 tests, and
-  `npm run build` passed from `frontend/`.
+The initial dataset was treated as source data, not clean application truth. The
+app imports it into SQLite while preserving dirty values:
+
+- Duplicate source IDs remain as `external_id` duplicates.
+- Missing brands remain missing.
+- Invalid date formats and null dates remain visible.
+- Future purchase dates remain visible.
+- Unknown statuses remain visible.
+- Notes/history that imply damage remain stored for audit context.
+- `In Use` rows without assignees remain visible but are guarded from invalid
+  return actions.
+
+AI helped identify two integration challenges:
+
+- The first AI draft tried to normalize the domain into a broader inventory
+  model. Manual review corrected this so the app stayed aligned with the
+  assignment fields.
+- The auditor design needed to preserve dirty data while still protecting core
+  workflows. The final approach keeps dirty records visible, uses deterministic
+  checks to flag them, and prevents unsafe state transitions.
+
+The dataset is not automatically repaired by AI. Future production work should
+add an explicit admin correction workflow with audit history.

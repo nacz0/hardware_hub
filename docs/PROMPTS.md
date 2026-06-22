@@ -1,300 +1,137 @@
 # Prompt Trail
 
-Concise prompt history for review. Do not paste assignment content verbatim.
+This file records the most important prompts and outcomes. It intentionally does
+not include the full chat history.
 
-## Architecture Planning
+## 1. MVP Planning
 
-Requested a 4-5 hour MVP plan for Hardware Hub using FastAPI, SQLite, Vue 3,
+Prompt summary: Plan a 4-5 hour Hardware Hub MVP using FastAPI, SQLite, Vue 3,
 OpenAI API, GitHub Actions, Vercel, and Railway if time allows.
 
-Required features: admin-created users, login, hardware management, user
-management, dashboard sorting/filtering, rent/return flow, Inventory Auditor,
-critical tests, and README documentation.
+Outcome: Created the initial architecture, API outline, test list, scope
+trade-offs, and README risk notes.
 
-## Codex Outcome
+Correction: The first AI plan introduced generic inventory fields. Manual review
+corrected the domain back to the assignment fields and statuses.
 
-Codex produced the first plan, API outline, schema proposal, test list,
-shortcuts, and README risk notes.
+## 2. Backend Scaffold
 
-Issue: the first version introduced generic inventory fields/statuses that were
-not in the assignment.
+Prompt summary: Create the FastAPI backend scaffold inside `backend/`.
 
-## Manual Corrections
+Outcome: Added FastAPI app setup, CORS for local Vue development,
+`requirements.txt`, SQLite connection helper, and `GET /health`.
 
-- Use `name`, `brand`, `purchaseDate`, `status`, `notes`, `assignedTo`,
-  `history`.
-- Preserve `Available`, `In Use`, `Repair`.
-- Do not make category/condition/rented/maintenance/retired core fields.
-- Dashboard shows Name, Brand, Purchase Date, Status.
-- Access requires an admin-created account.
-- AI-native feature is Inventory Auditor.
-- Dirty seed data should be preserved and audited.
+Correction: Moved ignore rules to the root `.gitignore` because this is a
+monorepo.
 
-## Documentation Condensing
+## 3. Hardware Model and Dirty Seed Import
 
-Docs were shortened to early-stage scaffolds so they stay review-friendly and
-can grow with implementation evidence.
+Prompt summary: Implement the backend hardware database model and seed import
+while preserving intentionally dirty seed values for AI auditing.
 
-## Future Prompts
+Outcome: Added the `hardware` table, `external_id` source identifier, idempotent
+seed import, and `GET /hardware`.
 
-### Prompt
+Correction: Moved seed data into `backend/app/seed_data.py` so database setup
+and source data had separate ownership.
 
-Summary: Create the FastAPI backend scaffold inside `backend/` only.
+## 4. Authentication and Authorization
 
-Outcome: Added a minimal FastAPI app with SQLite connection helper,
-`requirements.txt`, CORS for the local Vue frontend at
-`http://localhost:5173`, and `GET /health` returning `{"status": "ok"}`.
-Verified the health endpoint with FastAPI's test client.
+Prompt summary: Implement local auth with bcrypt password hashing, JWT access
+tokens, admin/user roles, initial admin seeding from environment variables, and
+protected endpoints.
 
-Correction: moved backend ignore rules from `backend/.gitignore` to the root
-`.gitignore` because this project is a monorepo, and documented that decision
-in `docs/DECISIONS.md`.
+Outcome: Added login, current-user lookup, admin-only user creation, email
+normalization, bcrypt password constraints, and JWT secret validation.
 
-### Prompt
+Correction: Split auth and user persistence into focused modules instead of
+leaving everything in `database.py`.
 
-Summary: Implement the backend hardware database model and seed import using
-SQLite, while preserving intentionally dirty seed values for later AI auditing.
+## 5. Hardware Rental Business Rules
 
-Outcome: Added a `hardware` table initialized by the FastAPI backend with an
-internal database primary key and preserved source identifiers as
-`external_id`, allowing duplicate seed IDs to remain visible. Added
-`GET /hardware` to return all seeded rows, including invalid dates, unknown
-statuses, missing brands, notes, assigned users, and history values. Added a
-short code comment explaining that dirty seed data is kept for the auditor.
+Prompt summary: Implement backend hardware rental and return logic.
 
-Correction: moved the hardware seed list out of the database helper into
-`backend/app/seed_data.py`, leaving `backend/app/database.py` responsible for
-schema creation, idempotent seeding, and hardware reads.
+Outcome: Added rent, return, repair, available, create, and delete operations.
+Rental is allowed only from `Available`; return is allowed only from assigned
+`In Use` hardware. Admin-only mutations are protected server-side.
 
-### Prompt
+Correction: Tightened database updates with conditional status predicates so
+transitions are enforced at update time.
 
-Summary: Implement simple local authentication and authorization inside
-`backend/` using bcrypt password hashing, JWT access tokens, admin/user roles,
-initial admin seeding from environment variables, and protected auth/admin
-endpoints.
+## 6. Critical Backend Tests
 
-Outcome: Added `bcrypt` and `PyJWT` backend dependencies. Added a `users` table
-with hashed passwords and roles. Added initial admin seeding, `POST
-/auth/login`, `GET /auth/me`, and admin-only `POST /admin/users`. The backend
-enforces roles server-side, rejects invalid logins with `401`, requires a
-32-byte `JWT_SECRET`, validates emails, caps bcrypt password input length, and
-does not promote an existing user during admin seeding.
+Prompt summary: Add focused pytest coverage for rental rules and admin-only user
+creation.
 
-Correction: refactored user persistence and authentication logic out of
-`backend/app/database.py` into `backend/app/users.py`. Verified the admin/user
-flow, invalid login, role denial, invalid email, overlong password, JWT secret
-startup failures, and non-promoting seed behavior.
+Outcome: Tests cover invalid rental states, valid rental, invalid returns,
+regular-user admin denial, and admin user creation.
 
-### Prompt
+Later correction: Added regression tests for unassigned returns, cross-user
+return denial, admin return, and AI auditor fallback behavior.
 
-Summary: Implement backend hardware rental and return business logic inside
-`backend/`.
+## 7. AI Inventory Auditor
 
-Outcome: Added server-side endpoints for renting, returning, marking repair,
-marking available, creating hardware, and deleting hardware. Rental is allowed
-only from `Available`, return is allowed only from `In Use`, rent assigns the
-current user's email, and return clears assignment. Admin-only actions are
-guarded on the backend, invalid transitions return `400`, missing permissions
-return `403`, and missing hardware returns `404`. Added focused FastAPI tests
-for the core business rules and added test dependencies.
+Prompt summary: Implement the backend AI Inventory Auditor feature.
 
-Correction: tightened rent/return mutations to use conditional status updates
-so the expected source status is enforced at database update time, not only by
-an earlier route check.
+Outcome: Added admin-only `POST /ai/audit`, deterministic inventory checks,
+OpenAI SDK integration, strict structured JSON validation, redacted model input,
+and deterministic fallback.
 
-### Prompt
+Correction: Kept deterministic findings authoritative and split the auditor into
+route, checks, OpenAI adapter, report, and schema modules.
 
-Summary: Refactor the hardware rental and return implementation so `main.py`
-stays small and future updates have clear module ownership.
+## 8. Vue Frontend
 
-Outcome: Moved JWT token creation, current-user lookup, and admin dependency
-logic into `backend/app/auth.py`. Moved hardware request models, routes, and
-business operations into `backend/app/hardware.py`, then registered the router
-from `main.py`. `main.py` now focuses on FastAPI app setup, health, login,
-current-user, and admin user creation endpoints. Updated tests to import token
-creation from the auth module.
+Prompt summary: Create the Vue 3 + TypeScript frontend scaffold, then implement
+login, dashboard, admin panel, and AI auditor views.
 
-Correction: documented the convention in `docs/DECISIONS.md`: keep `main.py`
-tidy and split routes, auth, and business logic into focused modules when
-behavior grows.
+Outcome: Added Vite setup, typed API client, JWT storage, session restore,
+role-gated navigation, dashboard filters/sorting, rent/return actions, admin
+forms, and the audit result UI.
 
-### Prompt
+Correction: Kept OpenAI calls backend-only and used frontend role checks only as
+UX hints, with server-side authorization remaining authoritative.
 
-Summary: Add critical backend pytest coverage for hardware rental rules and
-admin-only user creation.
+## 9. Figma-Inspired UI Pass
 
-Outcome: Reworked `backend/tests/test_hardware_business.py` into six focused
-API-level tests covering repair/in-use/available rental behavior, invalid
-returns, regular-user denial for user creation, and admin user creation.
-Tests use a temporary SQLite database via `tmp_path`, create their own admin
-and regular user fixtures, avoid OpenAI API calls, and do not depend on the
-developer's local database or fixed seed rows.
+Prompt summary: Compare the Vue frontend against Figma login/dashboard
+wireframes and apply the most important UI improvements.
 
-Verification: ran `pytest backend\tests`; all six tests passed.
+Outcome: Direct Figma MCP inspection was blocked by account permissions, so the
+published Figma mock was reviewed in the browser. The implemented UI adopted a
+standalone login screen, fixed sidebar, table-first hardware list, compact
+status badges, and simplified admin table.
 
-### Prompt
+Simplifications kept: no Vue Router, no dedicated My Rentals screen, no modal
+rewrite, and no fake AI assistant input.
 
-Summary: Implement the backend AI Inventory Auditor feature.
+## 10. Browser Testing and Deployed Bug Fix
 
-Outcome: Added admin-only `POST /ai/audit`. It loads inventory, runs
-deterministic data-quality checks, optionally calls OpenAI through the official
-Python SDK, and returns an advisory structured report without mutating records.
-
-Necessary corrections:
-
-- Use the OpenAI SDK, not raw HTTP.
-- Keep deterministic findings authoritative and redact sensitive inventory
-  fields before sending data to OpenAI.
-- Require admin access, handle dirty date values safely, and surface/log
-  deterministic fallback when OpenAI is unavailable.
-- Split the long auditor file into route, checks, OpenAI, report, and schema
-  modules.
-
-Verification: ran `pytest` from `backend/`; all 13 tests passed.
-
-### Prompt
-
-Summary: Create the Vue 3 + TypeScript frontend scaffold inside `frontend/`
-using Vite.
-
-Outcome: Added a Vite-powered Vue 3 app with TypeScript configuration,
-frontend-local environment files, simple state-based view switching, and the
-requested `LoginView`, `DashboardView`, `AdminView`, and `AiAuditorView`.
-Added a maintainable CSS baseline and a `GET /health` check wired through
-`VITE_API_URL`.
-
-Verification: ran `npm.cmd run build`; the Vue type check and Vite production
-build passed. Started the frontend locally and confirmed
-`http://localhost:5173/` returned `200`.
-
-### Prompt
-
-Summary: Implement frontend login and the hardware dashboard.
-
-Outcome: Added a typed API client using `VITE_API_URL`, JWT storage in
-`localStorage`, session restore with current user role, and a working login
-screen. Replaced the placeholder dashboard with hardware loading, status/brand
-and text filters, name/purchase-date sorting, displayed assignment fields, and
-rent/return buttons that call the backend and refresh the list.
-
-Verification: ran `npm run build`, checked the running backend API, verified
-admin and regular user login, exercised hardware list loading, filters,
-sorting, and a rent/return flow through the UI.
-
-### Prompt
-
-Summary: Implement the Vue admin panel.
-
-Outcome: Added typed frontend API helpers for admin-only user creation,
-hardware creation, hardware deletion, and marking hardware as `Repair`.
-Rendered `AdminView` only for users with the `admin` role, replaced the
-placeholder with simple forms and a hardware management table, refreshed
-hardware state after successful mutations, and surfaced clear success/error
-messages while still relying on backend authorization for security.
-
-Verification: ran `npm run build`; the Vue type check and Vite production
-build passed. Started the frontend locally on `http://localhost:5174/` because
-`5173` was already in use.
-
-### Prompt
-
-Summary: Implement the AI Inventory Auditor frontend view.
-
-Outcome: Replaced the placeholder auditor UI with an admin-only `AiAuditorView`
-that calls backend `POST /ai/audit`, shows a loading state, renders the audit
-summary, and separates readable issue cards by severity. The frontend does not
-call OpenAI directly or expose any API key.
-
-Verification: ran `npm run build` and verified the view in the browser. The
-audit button showed the loading state, then rendered the backend summary and
-severity-grouped issues. Also confirmed friendly handling of the backend
-fallback summary when the AI path was unavailable.
-
-### Prompt
-
-Summary: Compare the current Vue frontend against Figma login/dashboard
-wireframes and apply only the most important Figma-inspired UI improvements.
-
-Outcome: The original Figma MCP file inspection was blocked by missing edit
-access, so the published Figma mock was inspected through the Chrome-backed
-browser MCP instead. The live mock showed a standalone centered login card,
-fixed left navigation, table-first hardware list, compact status badges, and a
-simple admin table.
-
-Implemented a frontend-only UI pass: `LoginView` now renders outside the
-authenticated app shell, logged-in users see one selected view at a time from
-the sidebar, the dashboard is renamed/presented as `Hardware List`, the API
-health panel is kept but moved below the main work area, and shared CSS was
-tuned for Figma-like spacing, sidebar width, white table surfaces, darker
-primary actions, and compact badges.
-
-Simplifications kept intentionally: no router rewrite, no new `My Rentals`
-screen, no add/edit modal rewrite, no icon-library adoption, and no real AI
-assistant behavior behind the Figma `Ask AI...` input.
-
-Verification: ran `npm run build` from `frontend/`; Vue type check and Vite
-production build passed.
-
-### Prompt
-
-Summary: Fix two MVP smoke-test issues without cleaning the intentionally dirty
-seed data.
-
-Outcome: Updated purchase-date sorting in the Vue dashboard so only strict
-`YYYY-MM-DD` dates participate in chronological ordering. Invalid or missing
-purchase dates remain visible in the table but sort after valid dates in both
-ascending and descending order.
-
-Also tightened return behavior for dirty `In Use` rows without an assignee.
-The frontend now disables `Return` unless a row is `In Use` and has
-`assignedTo`, while the backend rejects unassigned return requests and uses a
-conditional database update that requires a non-empty `assigned_to` value.
-
-Verification: added a backend regression test for returning an unassigned
-`In Use` item, ran `python -m pytest backend\tests` with 14 passing tests, and
-ran `npm run build` successfully from `frontend/`.
-
-### Prompt
-
-Summary: Use Chrome DevTools MCP to test the deployed Hardware Hub application,
+Prompt summary: Use Chrome DevTools MCP to test the deployed Hardware Hub app,
 admin flows first, then a newly created non-admin user.
 
-Outcome: Deployed smoke checks mostly passed for admin, non-admin, `/health`,
-AI Auditor, filtering/sorting, and rent/return. Finding: admin Add hardware
-failed with `U.trim is not a function` when numeric `Source ID` was used.
+Outcome: Smoke checks covered login, `/health`, dashboard sorting/filtering,
+rent/return, admin visibility, AI Auditor, and deployed add-hardware behavior.
 
-### Prompt
+Correction: Fixed the numeric `Source ID` crash in `AdminView.vue` by converting
+optional numeric input to a string before trimming.
 
-Summary: Fix the admin Add hardware bug.
+## 11. Return Authorization Regression
 
-Outcome: Updated `frontend/src/views/AdminView.vue` to normalize optional
-numeric input before trimming. `npm run build` passed from `frontend/`.
+Prompt summary: Fix a manually discovered return-permission bug.
 
-### Prompt
+Outcome: Backend return logic now allows regular users to return only devices
+assigned to their own email, while admins can return any assigned `In Use`
+device. The dashboard button mirrors the same rule.
 
-Summary: Retest the fixed Add hardware flow with Chrome DevTools MCP while
-logged in as admin.
+Verification: Added regression tests for self-return, cross-user denial, and
+admin return. Backend tests and frontend build passed.
 
-Outcome: First deployed retest still showed the old error, then a later retest
-passed after deployment. A temporary row with numeric `Source ID` was created
-successfully. Cleanup briefly blocked on the browser confirm dialog while using
-Chrome MCP; after confirmation, a fresh inventory check showed the row was gone.
+## 12. Final Documentation
 
-### Prompt
+Prompt summary: Update final project documentation with honest implementation
+status, AI usage, data strategy, prompts, decisions, deployment, tests, and
+security notes.
 
-Summary: Fix a manually discovered return-permission bug.
-
-Outcome: Manual testing found that any authenticated user could return any
-assigned `In Use` device. This gap was missed by earlier extensive
-AI-assisted implementation, review, and browser smoke testing, which covered
-rent/return happy paths and dirty unassigned rows but not cross-user ownership.
-
-Correction: backend return logic now allows regular users to return only
-devices assigned to their own email, while admins may return any assigned
-`In Use` device. The database transition also checks the assignee atomically
-for regular users. The Vue dashboard now enables `Return` only under the same
-client-side rule.
-
-Verification: added backend regression coverage for self-return,
-cross-user denial, and admin return. Ran `python -m pytest backend\tests`
-with 17 passing tests and `npm run build` successfully from `frontend/`.
+Outcome: Updated README, AI log, prompt trail, and architecture decisions to
+reflect the implemented MVP and remaining production gaps.
