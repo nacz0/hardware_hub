@@ -66,6 +66,17 @@ def reject_invalid_transition(detail: str) -> None:
     )
 
 
+def reject_forbidden_transition(detail: str) -> None:
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=detail,
+    )
+
+
+def assignee_matches_user(assigned_to: str, user_email: str) -> bool:
+    return assigned_to.strip().lower() == user_email.strip().lower()
+
+
 def rent_available_hardware(hardware_id: int, user_email: str) -> dict:
     hardware_item = get_hardware_or_404(hardware_id)
     if hardware_item["status"] != "Available":
@@ -83,12 +94,16 @@ def rent_available_hardware(hardware_id: int, user_email: str) -> dict:
     return require_hardware_result(updated)
 
 
-def return_in_use_hardware(hardware_id: int) -> dict:
+def return_in_use_hardware(hardware_id: int, current_user: dict) -> dict:
     hardware_item = get_hardware_or_404(hardware_id)
     if hardware_item["status"] != "In Use":
         reject_invalid_transition("Hardware can only be returned when In Use")
-    if not str(hardware_item.get("assigned_to") or "").strip():
+    assigned_to = str(hardware_item.get("assigned_to") or "").strip()
+    if not assigned_to:
         reject_invalid_transition("Hardware cannot be returned without an assigned user")
+    is_admin = current_user["role"] == "admin"
+    if not is_admin and not assignee_matches_user(assigned_to, current_user["email"]):
+        reject_forbidden_transition("Hardware can only be returned by the assigned user")
 
     updated = transition_hardware_status(
         hardware_id,
@@ -96,12 +111,18 @@ def return_in_use_hardware(hardware_id: int) -> dict:
         "Available",
         None,
         require_assigned_to=True,
+        expected_assigned_to=None if is_admin else current_user["email"],
     )
     if updated is None:
         current = get_hardware_or_404(hardware_id)
         if current["status"] != "In Use":
             reject_invalid_transition("Hardware can only be returned when In Use")
-        reject_invalid_transition("Hardware cannot be returned without an assigned user")
+        assigned_to = str(current.get("assigned_to") or "").strip()
+        if not assigned_to:
+            reject_invalid_transition("Hardware cannot be returned without an assigned user")
+        if not is_admin:
+            reject_forbidden_transition("Hardware can only be returned by the assigned user")
+        reject_invalid_transition("Hardware can only be returned when In Use")
     return require_hardware_result(updated)
 
 
@@ -146,9 +167,9 @@ def rent_hardware(
 @router.post("/hardware/{hardware_id}/return")
 def return_hardware(
     hardware_id: int,
-    _current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ) -> dict:
-    return return_in_use_hardware(hardware_id)
+    return return_in_use_hardware(hardware_id, current_user)
 
 
 @router.post("/hardware/{hardware_id}/repair")

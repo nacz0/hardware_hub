@@ -279,3 +279,22 @@ Outcome: First deployed retest still showed the old error, then a later retest
 passed after deployment. A temporary row with numeric `Source ID` was created
 successfully. Cleanup briefly blocked on the browser confirm dialog while using
 Chrome MCP; after confirmation, a fresh inventory check showed the row was gone.
+
+### Prompt
+
+Summary: Fix a manually discovered return-permission bug.
+
+Outcome: Manual testing found that any authenticated user could return any
+assigned `In Use` device. This gap was missed by earlier extensive
+AI-assisted implementation, review, and browser smoke testing, which covered
+rent/return happy paths and dirty unassigned rows but not cross-user ownership.
+
+Correction: backend return logic now allows regular users to return only
+devices assigned to their own email, while admins may return any assigned
+`In Use` device. The database transition also checks the assignee atomically
+for regular users. The Vue dashboard now enables `Return` only under the same
+client-side rule.
+
+Verification: added backend regression coverage for self-return,
+cross-user denial, and admin return. Ran `python -m pytest backend\tests`
+with 17 passing tests and `npm run build` successfully from `frontend/`.

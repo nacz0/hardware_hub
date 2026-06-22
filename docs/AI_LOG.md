@@ -87,3 +87,18 @@ Use after the frontend runs:
 - Deployed retest created a temporary row with numeric source ID and no trim
   error. Cleanup briefly blocked on the browser confirm dialog during Chrome MCP
   use; after confirmation, a fresh inventory check showed the row was gone.
+
+## Manual Testing Gap
+
+- Manual testing later found a return-authorization bug: any authenticated user
+  could return any assigned `In Use` device.
+- This was not caught by the earlier extensive AI-assisted testing and Chrome
+  MCP smoke checks. Those checks covered login, filtering/sorting, happy-path
+  rent/return behavior, admin visibility, AI Auditor, unassigned dirty rows,
+  and deployed admin workflows, but missed the cross-user ownership case.
+- Correction: backend return authorization now limits regular users to devices
+  assigned to their own email, while admins can return any assigned `In Use`
+  device. The dashboard Return button mirrors the same client-side rule.
+- Verification: added regression tests for self-return, cross-user denial, and
+  admin return. `python -m pytest backend\tests` passed with 17 tests, and
+  `npm run build` passed from `frontend/`.

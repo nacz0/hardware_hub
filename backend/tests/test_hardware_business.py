@@ -132,6 +132,67 @@ def test_user_cannot_return_in_use_hardware_without_assignee(client):
     assert response.json()["detail"] == "Hardware cannot be returned without an assigned user"
 
 
+def test_user_can_return_hardware_assigned_to_them(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(
+        test_client,
+        admin,
+        status="In Use",
+        assigned_to=user["email"],
+    )
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/return",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "Available"
+    assert response.json()["assigned_to"] is None
+
+
+def test_user_cannot_return_hardware_assigned_to_someone_else(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(
+        test_client,
+        admin,
+        status="In Use",
+        assigned_to="other@example.com",
+    )
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/return",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Hardware can only be returned by the assigned user"
+
+    unchanged = test_client.get("/hardware").json()
+    returned_item = next(item for item in unchanged if item["id"] == hardware["id"])
+    assert returned_item["status"] == "In Use"
+    assert returned_item["assigned_to"] == "other@example.com"
+
+
+def test_admin_can_return_hardware_assigned_to_someone_else(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(
+        test_client,
+        admin,
+        status="In Use",
+        assigned_to=user["email"],
+    )
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/return",
+        headers=auth_headers(admin),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "Available"
+    assert response.json()["assigned_to"] is None
+
+
 def test_regular_user_cannot_create_another_user(client):
     test_client, _admin, user = client
 

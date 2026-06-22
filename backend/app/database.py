@@ -165,21 +165,31 @@ def transition_hardware_status(
     assigned_to: str | None,
     *,
     require_assigned_to: bool = False,
+    expected_assigned_to: str | None = None,
 ) -> dict | None:
     initialize_database()
 
-    assigned_to_predicate = ""
+    predicates = ""
+    parameters: list[str | int | None] = [
+        status_value,
+        assigned_to,
+        hardware_id,
+        expected_status,
+    ]
     if require_assigned_to:
-        assigned_to_predicate = " AND assigned_to IS NOT NULL AND TRIM(assigned_to) != ''"
+        predicates += " AND assigned_to IS NOT NULL AND TRIM(assigned_to) != ''"
+    if expected_assigned_to is not None:
+        predicates += " AND LOWER(TRIM(assigned_to)) = LOWER(TRIM(?))"
+        parameters.append(expected_assigned_to)
 
     with get_connection() as connection:
         cursor = connection.execute(
             f"""
             UPDATE hardware
             SET status = ?, assigned_to = ?
-            WHERE id = ? AND status = ?{assigned_to_predicate}
+            WHERE id = ? AND status = ?{predicates}
             """,
-            (status_value, assigned_to, hardware_id, expected_status),
+            tuple(parameters),
         )
 
     if cursor.rowcount == 0:

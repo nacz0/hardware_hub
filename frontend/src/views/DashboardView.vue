@@ -140,7 +140,15 @@ function getDateSortValue(value?: string | null): { isValid: boolean; time: numb
 }
 
 function canReturn(item: HardwareItem): boolean {
-  return item.status === 'In Use' && Boolean(item.assignedTo?.trim());
+  const assignedTo = item.assignedTo?.trim();
+  if (item.status !== 'In Use' || !assignedTo) {
+    return false;
+  }
+
+  return (
+    props.currentUser.role === 'admin' ||
+    assignedTo.toLowerCase() === props.currentUser.email.trim().toLowerCase()
+  );
 }
 
 function formatText(value?: string | null): string {
