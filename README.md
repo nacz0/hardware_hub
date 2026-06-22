@@ -102,13 +102,15 @@ the frontend calls `http://127.0.0.1:8000`.
 
 ## Testing
 
-Placeholder until implementation.
+Current coverage includes auth/admin guards, rent/return rules, Inventory
+Auditor handling, frontend production builds, and Chrome DevTools MCP smoke
+checks against the deployed Vercel/Railway app.
 
-Expected coverage:
-
-- Auth and admin role guards
-- Rent/return business rules, including rejecting unassigned `In Use` returns
-- Inventory Auditor access and failure handling
+Latest deployed finding: Admin Add hardware failed with `U.trim is not a
+function` when numeric `Source ID` was used. Fixed by normalizing optional
+numeric input before trimming. Chrome MCP retest confirmed creation works; the
+temporary row was deleted after the browser flow briefly blocked on the delete
+confirmation dialog.
 
 ## Implementation Status
 

@@ -77,3 +77,13 @@ Use after the frontend runs:
   returns in the backend.
 - Verification: `python -m pytest backend\tests` passed with 14 tests, and
   `npm run build` passed from `frontend/`.
+
+## Deployed Chrome MCP Regression
+
+- Chrome DevTools MCP found deployed Admin Panel -> Add hardware failed with
+  `U.trim is not a function` when `Source ID` was filled.
+- Fixed `AdminView.vue` by normalizing optional numeric input before trimming;
+  `npm run build` passed from `frontend/`.
+- Deployed retest created a temporary row with numeric source ID and no trim
+  error. Cleanup briefly blocked on the browser confirm dialog during Chrome MCP
+  use; after confirmation, a fresh inventory check showed the row was gone.

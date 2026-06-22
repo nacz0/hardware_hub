@@ -253,3 +253,29 @@ conditional database update that requires a non-empty `assigned_to` value.
 Verification: added a backend regression test for returning an unassigned
 `In Use` item, ran `python -m pytest backend\tests` with 14 passing tests, and
 ran `npm run build` successfully from `frontend/`.
+
+### Prompt
+
+Summary: Use Chrome DevTools MCP to test the deployed Hardware Hub application,
+admin flows first, then a newly created non-admin user.
+
+Outcome: Deployed smoke checks mostly passed for admin, non-admin, `/health`,
+AI Auditor, filtering/sorting, and rent/return. Finding: admin Add hardware
+failed with `U.trim is not a function` when numeric `Source ID` was used.
+
+### Prompt
+
+Summary: Fix the admin Add hardware bug.
+
+Outcome: Updated `frontend/src/views/AdminView.vue` to normalize optional
+numeric input before trimming. `npm run build` passed from `frontend/`.
+
+### Prompt
+
+Summary: Retest the fixed Add hardware flow with Chrome DevTools MCP while
+logged in as admin.
+
+Outcome: First deployed retest still showed the old error, then a later retest
+passed after deployment. A temporary row with numeric `Source ID` was created
+successfully. Cleanup briefly blocked on the browser confirm dialog while using
+Chrome MCP; after confirmation, a fresh inventory check showed the row was gone.
