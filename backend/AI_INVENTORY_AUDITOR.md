@@ -5,6 +5,14 @@ hardware inventory. The endpoint loads inventory from SQLite, runs
 deterministic checks, then optionally asks OpenAI for an advisory structured
 report through the official OpenAI Python SDK.
 
+The implementation is split by responsibility:
+
+- `ai_audit.py`: FastAPI route orchestration
+- `ai_audit_checks.py`: deterministic inventory checks
+- `ai_audit_openai.py`: OpenAI request building, redaction, and fallback logging
+- `ai_audit_reports.py`: deterministic and AI report merging
+- `ai_audit_models.py`: Pydantic response models and JSON schema
+
 The deterministic checks cover:
 
 - duplicate external IDs

@@ -13,7 +13,8 @@ sys.path.insert(0, str(BACKEND_ROOT))
 import pytest
 from fastapi.testclient import TestClient
 
-from app import ai_audit
+from app import ai_audit_checks
+from app import ai_audit_openai
 from app import database
 from app.auth import create_access_token
 from app.main import app
@@ -207,7 +208,7 @@ def test_ai_audit_requires_admin(client):
 
 
 def test_ai_audit_treats_non_string_purchase_date_as_invalid():
-    issues = ai_audit.detect_inventory_facts(
+    issues = ai_audit_checks.detect_inventory_facts(
         [
             {
                 "id": 99,
@@ -237,7 +238,7 @@ def test_ai_audit_mock_mode_skips_openai_even_with_api_key(client, monkeypatch):
     def fail_if_called(*_args, **_kwargs):
         raise AssertionError("OpenAI API should not be called in mock mode")
 
-    monkeypatch.setattr(ai_audit, "OpenAI", fail_if_called)
+    monkeypatch.setattr(ai_audit_openai, "OpenAI", fail_if_called)
 
     response = test_client.post("/ai/audit", headers=auth_headers(admin))
 
@@ -248,7 +249,7 @@ def test_ai_audit_mock_mode_skips_openai_even_with_api_key(client, monkeypatch):
 def test_ai_audit_logs_and_reports_openai_fallback(client, monkeypatch, caplog):
     test_client, admin, _user = client
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
-    caplog.set_level(logging.WARNING, logger=ai_audit.__name__)
+    caplog.set_level(logging.WARNING, logger=ai_audit_openai.__name__)
 
     class FakeResponse:
         output_text = "not-json"
@@ -261,7 +262,7 @@ def test_ai_audit_logs_and_reports_openai_fallback(client, monkeypatch, caplog):
         def __init__(self, **_kwargs):
             self.responses = FakeResponses()
 
-    monkeypatch.setattr(ai_audit, "OpenAI", FakeOpenAI)
+    monkeypatch.setattr(ai_audit_openai, "OpenAI", FakeOpenAI)
 
     response = test_client.post("/ai/audit", headers=auth_headers(admin))
 
@@ -297,7 +298,7 @@ def test_ai_audit_uses_openai_sdk_when_api_key_is_set(client, monkeypatch):
             calls.append(kwargs)
             self.responses = FakeResponses()
 
-    monkeypatch.setattr(ai_audit, "OpenAI", FakeOpenAI)
+    monkeypatch.setattr(ai_audit_openai, "OpenAI", FakeOpenAI)
 
     response = test_client.post("/ai/audit", headers=auth_headers(admin))
 
