@@ -17,3 +17,5 @@ implementation when trade-offs become concrete.
 | GitHub Actions CI | Keeps tests/build checks visible. | Initial CI will be basic. |
 | Single root `.gitignore` | This is a monorepo, so ignore rules live at the repository root instead of inside `backend/`. | Package-specific generated files need scoped paths when necessary. |
 | Keep `main.py` tidy | FastAPI app setup should stay small; split routes, auth, and business logic into focused modules such as `hardware.py` when behavior grows. | More files, but clearer ownership for future updates. |
+| Table-first frontend shell | The Figma mock emphasizes a simple internal tool: standalone login, fixed left navigation, and one table-focused work area at a time. | Kept state-based view switching instead of adding Vue Router for the MVP. |
+| Keep Figma changes minimal | UI changes should improve spacing, navigation, badges, and dashboard structure without rewriting behavior. | Figma details like My Rentals, modals, icon polish, and AI search are deferred. |

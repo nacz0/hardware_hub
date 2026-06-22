@@ -34,6 +34,24 @@ Use for layout guidance only:
 - Admin hardware/user management screens
 - Simple internal-tool usability checks
 
+### Figma/Chrome UI Review
+
+Direct Figma MCP inspection of the Make file was blocked because the connected
+account did not have edit access. Workaround: inspect the published Figma site
+with the Chrome-backed browser MCP at `https://serene-mural-33249528.figma.site/`.
+
+Observed wireframe details:
+
+- Standalone centered login card with email/password fields and a dark login
+  button.
+- Authenticated app shell with a fixed left sidebar, `Hardware Manager` brand,
+  navigation items, and bottom logout.
+- Table-first hardware list with compact rows, status badges, and rent actions.
+- Admin table with serial numbers, status badges, and compact action controls.
+
+Applied only layout guidance from this review. Existing Vue API calls and
+backend behavior remained the source of truth.
+
 ## Chrome DevTools MCP Plan
 
 Use after the frontend runs:
