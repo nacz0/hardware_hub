@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 import re
 import sqlite3
 from typing import Literal
@@ -10,11 +11,15 @@ from pydantic import BaseModel, Field, field_validator
 from app.ai_audit import router as ai_audit_router
 from app.auth import create_access_token, get_current_user, require_admin
 from app.database import initialize_database
+from app.env import load_environment
 from app.hardware import router as hardware_router
 from app.users import authenticate_user, create_user
 
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+load_environment()
 
 
 @asynccontextmanager
@@ -25,9 +30,23 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Hardware Hub API", lifespan=lifespan)
 
+
+def get_cors_origins() -> list[str]:
+    frontend_url = os.getenv("FRONTEND_URL", "").strip()
+    if not frontend_url:
+        return ["http://localhost:5173"]
+
+    origins = [
+        origin.strip().rstrip("/")
+        for origin in frontend_url.split(",")
+        if origin.strip()
+    ]
+    return origins or ["http://localhost:5173"]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

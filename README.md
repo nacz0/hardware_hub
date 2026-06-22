@@ -61,28 +61,44 @@ These can be future improvements, but they are not assignment fields.
 
 ## Local Setup
 
-Placeholder until the app is scaffolded.
+Create a local `.env` file in the repo root or in `backend/`. Do not commit it.
 
-```bash
+```powershell
 # backend
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 pytest
 uvicorn app.main:app --reload
 
 # frontend
+cd frontend
 npm install
 npm run dev
 ```
 
 ## Environment Variables
 
-Placeholder until implementation.
+Local and deployed environments use the same variable names. Secrets belong in
+your local `.env` file or the host provider's environment variable settings, not
+in git.
 
 ```bash
-DATABASE_URL=sqlite:///./hardware_hub.db
-JWT_SECRET=replace-me
+JWT_SECRET=replace-with-at-least-32-bytes
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_PASSWORD=replace-with-a-strong-password
 OPENAI_API_KEY=optional-locally
 OPENAI_MODEL=gpt-4.1-mini
+FRONTEND_URL=http://localhost:5173
+VITE_API_URL=http://127.0.0.1:8000
 ```
+
+`FRONTEND_URL` is read by the backend for CORS. If it is omitted locally, the
+backend allows `http://localhost:5173`.
+
+`VITE_API_URL` is read by the frontend at build time. If it is omitted locally,
+the frontend calls `http://127.0.0.1:8000`.
 
 ## Testing
 
@@ -150,12 +166,57 @@ without `assignedTo`.
 
 AI output is advisory only and must not automatically mutate inventory records.
 
-## Security and Deployment Notes
+## Deployment
+
+### Backend on Railway
+
+Create a Railway service from the repository and set the service root directory
+to `backend`. The checked-in `backend/railway.json` uses Railpack, checks
+`/health`, and starts the API with:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+Set these Railway environment variables:
+
+```bash
+JWT_SECRET=replace-with-at-least-32-bytes
+INITIAL_ADMIN_EMAIL=admin@example.com
+INITIAL_ADMIN_PASSWORD=replace-with-a-strong-password
+FRONTEND_URL=https://your-vercel-app.vercel.app
+OPENAI_API_KEY=optional-for-inventory-auditor
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Railway provides `PORT`; do not set it manually. The current MVP uses SQLite at
+`backend/hardware_hub.db`, so Railway deployments should be treated as
+assignment/demo deployments unless persistent storage or Postgres support is
+added.
+
+### Frontend on Vercel
+
+Create a Vercel project from the repository root. The checked-in `vercel.json`
+installs and builds the `frontend` app and serves `frontend/dist`.
+
+Set this Vercel environment variable:
+
+```bash
+VITE_API_URL=https://your-railway-service.up.railway.app
+```
+
+After Vercel gives you the production URL, set the same URL as `FRONTEND_URL`
+on Railway so browser requests pass CORS.
+
+## Security Notes
 
 This MVP is not production-ready.
 
 - Passwords must be hashed.
 - Admin checks must run server-side.
 - `OPENAI_API_KEY` must stay backend-only.
+- `JWT_SECRET`, initial admin credentials, and `OPENAI_API_KEY` must be stored
+  only as environment variables.
+- `.env` files must stay uncommitted.
 - Rate limiting, password reset, refresh tokens, and audit logging are deferred.
 - SQLite is acceptable for the assignment MVP; production should use Postgres.
