@@ -151,3 +151,18 @@ Necessary corrections:
   modules.
 
 Verification: ran `pytest` from `backend/`; all 13 tests passed.
+
+### Prompt
+
+Summary: Create the Vue 3 + TypeScript frontend scaffold inside `frontend/`
+using Vite.
+
+Outcome: Added a Vite-powered Vue 3 app with TypeScript configuration,
+frontend-local environment files, simple state-based view switching, and the
+requested `LoginView`, `DashboardView`, `AdminView`, and `AiAuditorView`.
+Added a maintainable CSS baseline and a `GET /health` check wired through
+`VITE_API_URL`.
+
+Verification: ran `npm.cmd run build`; the Vue type check and Vite production
+build passed. Started the frontend locally and confirmed
+`http://localhost:5173/` returned `200`.
