@@ -3,4 +3,5 @@ uvicorn[standard]
 bcrypt
 PyJWT
 httpx
+openai
 pytest

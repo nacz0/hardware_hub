@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
+from app.ai_audit import router as ai_audit_router
 from app.auth import create_access_token, get_current_user, require_admin
 from app.database import initialize_database
 from app.hardware import router as hardware_router
@@ -31,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(ai_audit_router)
 app.include_router(hardware_router)
 
 
