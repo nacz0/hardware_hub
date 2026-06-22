@@ -43,6 +43,21 @@ export type CreateHardwareInput = {
   history?: string | null;
 };
 
+export type AuditSeverity = 'high' | 'medium' | 'low' | string;
+
+export type AuditIssue = {
+  severity: AuditSeverity;
+  itemId: number;
+  title: string;
+  description: string;
+  suggestedAction: string;
+};
+
+export type AuditReport = {
+  summary: string;
+  issues: AuditIssue[];
+};
+
 type ApiUser = {
   id: number;
   email: string;
@@ -285,4 +300,10 @@ export async function returnHardware(hardwareId: number): Promise<HardwareItem> 
     method: 'POST',
   });
   return normalizeHardware(hardware);
+}
+
+export async function runInventoryAudit(): Promise<AuditReport> {
+  return request<AuditReport>('/ai/audit', {
+    method: 'POST',
+  });
 }

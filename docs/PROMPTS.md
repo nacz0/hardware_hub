@@ -195,3 +195,17 @@ messages while still relying on backend authorization for security.
 Verification: ran `npm run build`; the Vue type check and Vite production
 build passed. Started the frontend locally on `http://localhost:5174/` because
 `5173` was already in use.
+
+### Prompt
+
+Summary: Implement the AI Inventory Auditor frontend view.
+
+Outcome: Replaced the placeholder auditor UI with an admin-only `AiAuditorView`
+that calls backend `POST /ai/audit`, shows a loading state, renders the audit
+summary, and separates readable issue cards by severity. The frontend does not
+call OpenAI directly or expose any API key.
+
+Verification: ran `npm run build` and verified the view in the browser. The
+audit button showed the loading state, then rendered the backend summary and
+severity-grouped issues. Also confirmed friendly handling of the backend
+fallback summary when the AI path was unavailable.

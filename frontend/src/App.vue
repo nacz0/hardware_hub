@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { config, getCurrentUser, getHealth, tokenStore, type CurrentUser, type HealthResult } from './api';
 import AdminView from './views/AdminView.vue';
+import AiAuditorView from './views/AiAuditorView.vue';
 import DashboardView from './views/DashboardView.vue';
 import LoginView from './views/LoginView.vue';
 
@@ -86,6 +87,7 @@ function logout() {
 
       <template v-else-if="currentUser">
         <DashboardView :current-user="currentUser" />
+        <AiAuditorView v-if="isAdmin" />
         <AdminView v-if="isAdmin" />
       </template>
       <LoginView v-else @login="handleLogin" />
