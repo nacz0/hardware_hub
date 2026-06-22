@@ -163,8 +163,8 @@ function optionalText(value: string): string | null {
   return value.trim() || null;
 }
 
-function optionalNumber(value: string): number | null {
-  const trimmed = value.trim();
+function optionalNumber(value: string | number | null | undefined): number | null {
+  const trimmed = String(value ?? '').trim();
   if (!trimmed) {
     return null;
   }
