@@ -6,11 +6,14 @@ import AiAuditorView from './views/AiAuditorView.vue';
 import DashboardView from './views/DashboardView.vue';
 import LoginView from './views/LoginView.vue';
 
+type ActiveView = 'dashboard' | 'audit' | 'admin';
+
 const health = ref<HealthResult | null>(null);
 const isCheckingHealth = ref(false);
 const currentUser = ref<CurrentUser | null>(null);
 const sessionError = ref('');
 const isRestoringSession = ref(false);
+const activeView = ref<ActiveView>('dashboard');
 const isAdmin = computed(() => currentUser.value?.role === 'admin');
 
 onMounted(async () => {
@@ -40,32 +43,78 @@ async function checkHealth() {
 function handleLogin(user: CurrentUser) {
   sessionError.value = '';
   currentUser.value = user;
+  activeView.value = 'dashboard';
 }
 
 function logout() {
   tokenStore.clear();
   currentUser.value = null;
+  activeView.value = 'dashboard';
 }
 </script>
 
 <template>
-  <div class="app-shell">
+  <main v-if="!currentUser" class="login-shell">
+    <p v-if="sessionError" class="error-banner">{{ sessionError }}</p>
+    <p v-if="isRestoringSession" class="empty-state">Restoring session...</p>
+    <LoginView v-else @login="handleLogin" />
+  </main>
+
+  <div v-else class="app-shell">
     <aside class="sidebar">
-      <div>
-        <p class="eyebrow">Hardware Hub</p>
-        <h1>Operations Console</h1>
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true">HH</span>
+        <h1>Hardware Manager</h1>
       </div>
 
-      <div v-if="currentUser" class="session-card">
+      <nav class="nav-list" aria-label="Primary">
+        <button
+          class="nav-button"
+          :class="{ active: activeView === 'dashboard' }"
+          type="button"
+          @click="activeView = 'dashboard'"
+        >
+          Hardware List
+        </button>
+        <button
+          v-if="isAdmin"
+          class="nav-button"
+          :class="{ active: activeView === 'audit' }"
+          type="button"
+          @click="activeView = 'audit'"
+        >
+          AI Auditor
+        </button>
+        <button
+          v-if="isAdmin"
+          class="nav-button"
+          :class="{ active: activeView === 'admin' }"
+          type="button"
+          @click="activeView = 'admin'"
+        >
+          Admin Panel
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="session-card">
         <span class="label">Signed in</span>
         <strong>{{ currentUser.email }}</strong>
         <span class="role-pill">{{ currentUser.role }}</span>
-        <button class="secondary-button" type="button" @click="logout">Log out</button>
       </div>
+
+      <button class="logout-button" type="button" @click="logout">Log out</button>
     </aside>
 
     <main class="main-content">
-      <section class="status-bar">
+      <p v-if="sessionError" class="error-banner">{{ sessionError }}</p>
+
+      <DashboardView v-if="activeView === 'dashboard'" :current-user="currentUser" />
+      <AiAuditorView v-else-if="activeView === 'audit' && isAdmin" />
+      <AdminView v-else-if="activeView === 'admin' && isAdmin" />
+
+      <section class="status-bar compact">
         <div>
           <span class="label">API</span>
           <code>{{ config.apiUrl }}</code>
@@ -81,16 +130,6 @@ function logout() {
         <span v-else-if="health.error">{{ health.error }}</span>
         <pre v-if="health.body">{{ health.body }}</pre>
       </section>
-
-      <p v-if="sessionError" class="error-banner">{{ sessionError }}</p>
-      <p v-if="isRestoringSession" class="empty-state">Restoring session...</p>
-
-      <template v-else-if="currentUser">
-        <DashboardView :current-user="currentUser" />
-        <AiAuditorView v-if="isAdmin" />
-        <AdminView v-if="isAdmin" />
-      </template>
-      <LoginView v-else @login="handleLogin" />
     </main>
   </div>
 </template>

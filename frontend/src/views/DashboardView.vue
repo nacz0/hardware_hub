@@ -130,11 +130,15 @@ function formatText(value?: string | null): string {
 </script>
 
 <template>
-  <section class="view">
-    <div class="view-header">
-      <p class="eyebrow">Overview</p>
-      <h2>Dashboard</h2>
-      <p>Logged in as {{ props.currentUser.email }} with {{ props.currentUser.role }} access.</p>
+  <section class="view dashboard-view">
+    <div class="page-heading">
+      <div>
+        <h2>Hardware List</h2>
+        <p>{{ totalCount }} devices tracked for {{ props.currentUser.email }}.</p>
+      </div>
+      <button class="secondary-button" type="button" :disabled="isLoading" @click="loadHardware">
+        {{ isLoading ? 'Loading...' : 'Refresh' }}
+      </button>
     </div>
 
     <div class="metric-grid">
@@ -152,7 +156,7 @@ function formatText(value?: string | null): string {
       </article>
     </div>
 
-    <div class="toolbar" aria-label="Hardware filters">
+    <div class="toolbar dashboard-toolbar" aria-label="Hardware filters">
       <label>
         Search
         <input v-model.trim="searchText" type="search" placeholder="Name, brand, or assignee" />
@@ -185,9 +189,6 @@ function formatText(value?: string | null): string {
           <option value="desc">Descending</option>
         </select>
       </label>
-      <button class="secondary-button" type="button" :disabled="isLoading" @click="loadHardware">
-        {{ isLoading ? 'Loading...' : 'Refresh' }}
-      </button>
     </div>
 
     <p v-if="error" class="error-banner">{{ error }}</p>

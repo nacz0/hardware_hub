@@ -209,3 +209,28 @@ Verification: ran `npm run build` and verified the view in the browser. The
 audit button showed the loading state, then rendered the backend summary and
 severity-grouped issues. Also confirmed friendly handling of the backend
 fallback summary when the AI path was unavailable.
+
+### Prompt
+
+Summary: Compare the current Vue frontend against Figma login/dashboard
+wireframes and apply only the most important Figma-inspired UI improvements.
+
+Outcome: The original Figma MCP file inspection was blocked by missing edit
+access, so the published Figma mock was inspected through the Chrome-backed
+browser MCP instead. The live mock showed a standalone centered login card,
+fixed left navigation, table-first hardware list, compact status badges, and a
+simple admin table.
+
+Implemented a frontend-only UI pass: `LoginView` now renders outside the
+authenticated app shell, logged-in users see one selected view at a time from
+the sidebar, the dashboard is renamed/presented as `Hardware List`, the API
+health panel is kept but moved below the main work area, and shared CSS was
+tuned for Figma-like spacing, sidebar width, white table surfaces, darker
+primary actions, and compact badges.
+
+Simplifications kept intentionally: no router rewrite, no new `My Rentals`
+screen, no add/edit modal rewrite, no icon-library adoption, and no real AI
+assistant behavior behind the Figma `Ask AI...` input.
+
+Verification: ran `npm run build` from `frontend/`; Vue type check and Vite
+production build passed.
