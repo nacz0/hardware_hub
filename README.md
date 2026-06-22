@@ -91,7 +91,7 @@ Placeholder until implementation.
 Expected coverage:
 
 - Auth and admin role guards
-- Rent/return business rules
+- Rent/return business rules, including rejecting unassigned `In Use` returns
 - Inventory Auditor access and failure handling
 
 ## Implementation Status
@@ -105,6 +105,10 @@ Expected coverage:
 - Vue frontend login, table-first hardware dashboard, admin tools, and AI audit view
 - Figma-inspired frontend shell with standalone login, sidebar navigation, and
   compact table/status styling
+- Strict purchase-date dashboard sorting that keeps invalid/missing dirty dates
+  visible but ordered after valid ISO dates
+- Rent/return guards that prevent returning `In Use` hardware without an
+  assignee
 
 ### Shortcuts & Hacks
 

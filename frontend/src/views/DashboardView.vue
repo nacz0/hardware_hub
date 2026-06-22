@@ -15,6 +15,8 @@ const props = defineProps<{
 type SortField = 'name' | 'purchaseDate';
 type SortDirection = 'asc' | 'desc';
 
+const isoDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 const hardware = ref<HardwareItem[]>([]);
 const error = ref('');
 const isLoading = ref(false);
@@ -57,7 +59,7 @@ const filteredHardware = computed(() => {
       const direction = sortDirection.value === 'asc' ? 1 : -1;
 
       if (sortField.value === 'purchaseDate') {
-        return comparePurchaseDate(left, right) * direction;
+        return comparePurchaseDate(left, right, direction);
       }
 
       return left.name.localeCompare(right.name) * direction;
@@ -104,24 +106,41 @@ async function runHardwareAction(item: HardwareItem, action: 'rent' | 'return') 
   }
 }
 
-function comparePurchaseDate(left: HardwareItem, right: HardwareItem): number {
-  const leftTime = getDateTime(left.purchaseDate);
-  const rightTime = getDateTime(right.purchaseDate);
+function comparePurchaseDate(left: HardwareItem, right: HardwareItem, direction: number): number {
+  const leftDate = getDateSortValue(left.purchaseDate);
+  const rightDate = getDateSortValue(right.purchaseDate);
 
-  if (leftTime === rightTime) {
+  if (leftDate.isValid !== rightDate.isValid) {
+    return leftDate.isValid ? -1 : 1;
+  }
+
+  if (leftDate.time === rightDate.time) {
     return left.name.localeCompare(right.name);
   }
 
-  return leftTime - rightTime;
+  return (leftDate.time - rightDate.time) * direction;
 }
 
-function getDateTime(value?: string | null): number {
-  if (!value) {
-    return Number.POSITIVE_INFINITY;
+function getDateSortValue(value?: string | null): { isValid: boolean; time: number } {
+  const match = value?.trim().match(isoDatePattern);
+  if (!match) {
+    return { isValid: false, time: 0 };
   }
 
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  const isValid =
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day;
+
+  return isValid ? { isValid: true, time: parsed.getTime() } : { isValid: false, time: 0 };
+}
+
+function canReturn(item: HardwareItem): boolean {
+  return item.status === 'In Use' && Boolean(item.assignedTo?.trim());
 }
 
 function formatText(value?: string | null): string {
@@ -231,7 +250,7 @@ function formatText(value?: string | null): string {
                 <button
                   class="secondary-button"
                   type="button"
-                  :disabled="item.status !== 'In Use' || actionId === item.id"
+                  :disabled="!canReturn(item) || actionId === item.id"
                   @click="runHardwareAction(item, 'return')"
                 >
                   Return

@@ -87,11 +87,21 @@ def return_in_use_hardware(hardware_id: int) -> dict:
     hardware_item = get_hardware_or_404(hardware_id)
     if hardware_item["status"] != "In Use":
         reject_invalid_transition("Hardware can only be returned when In Use")
+    if not str(hardware_item.get("assigned_to") or "").strip():
+        reject_invalid_transition("Hardware cannot be returned without an assigned user")
 
-    updated = transition_hardware_status(hardware_id, "In Use", "Available", None)
+    updated = transition_hardware_status(
+        hardware_id,
+        "In Use",
+        "Available",
+        None,
+        require_assigned_to=True,
+    )
     if updated is None:
-        get_hardware_or_404(hardware_id)
-        reject_invalid_transition("Hardware can only be returned when In Use")
+        current = get_hardware_or_404(hardware_id)
+        if current["status"] != "In Use":
+            reject_invalid_transition("Hardware can only be returned when In Use")
+        reject_invalid_transition("Hardware cannot be returned without an assigned user")
     return require_hardware_result(updated)
 
 

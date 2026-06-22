@@ -119,6 +119,19 @@ def test_user_cannot_return_hardware_that_is_not_in_use(client):
     assert response.json()["detail"] == "Hardware can only be returned when In Use"
 
 
+def test_user_cannot_return_in_use_hardware_without_assignee(client):
+    test_client, admin, user = client
+    hardware = create_hardware_item(test_client, admin, status="In Use")
+
+    response = test_client.post(
+        f"/hardware/{hardware['id']}/return",
+        headers=auth_headers(user),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Hardware cannot be returned without an assigned user"
+
+
 def test_regular_user_cannot_create_another_user(client):
     test_client, _admin, user = client
 

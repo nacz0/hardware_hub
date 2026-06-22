@@ -234,3 +234,22 @@ assistant behavior behind the Figma `Ask AI...` input.
 
 Verification: ran `npm run build` from `frontend/`; Vue type check and Vite
 production build passed.
+
+### Prompt
+
+Summary: Fix two MVP smoke-test issues without cleaning the intentionally dirty
+seed data.
+
+Outcome: Updated purchase-date sorting in the Vue dashboard so only strict
+`YYYY-MM-DD` dates participate in chronological ordering. Invalid or missing
+purchase dates remain visible in the table but sort after valid dates in both
+ascending and descending order.
+
+Also tightened return behavior for dirty `In Use` rows without an assignee.
+The frontend now disables `Return` unless a row is `In Use` and has
+`assignedTo`, while the backend rejects unassigned return requests and uses a
+conditional database update that requires a non-empty `assigned_to` value.
+
+Verification: added a backend regression test for returning an unassigned
+`In Use` item, ran `python -m pytest backend\tests` with 14 passing tests, and
+ran `npm run build` successfully from `frontend/`.

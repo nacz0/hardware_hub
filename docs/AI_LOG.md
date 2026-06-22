@@ -64,9 +64,16 @@ Use after the frontend runs:
 
 ## AI Correction Example
 
-Placeholder:
-
-- AI suggestion:
-- Issue found:
-- Manual correction:
-- Verification:
+- AI-assisted review: Chrome DevTools MCP smoke-tested login, dashboard
+  rendering, filtering/sorting, rent/return actions, admin visibility, and the
+  AI auditor request against the running app.
+- Issue found: dirty seed rows were valid auditor input, but two core workflows
+  needed tighter handling: invalid/missing purchase dates sorted ahead of valid
+  dates in descending order, and an `In Use` row without `assignedTo` exposed a
+  usable return action.
+- Manual correction: kept dirty records intact, made dashboard date sorting
+  accept only strict `YYYY-MM-DD` dates and place invalid/missing dates after
+  valid dates, disabled unassigned returns in the UI, and rejected unassigned
+  returns in the backend.
+- Verification: `python -m pytest backend\tests` passed with 14 tests, and
+  `npm run build` passed from `frontend/`.
