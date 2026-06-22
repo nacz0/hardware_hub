@@ -79,11 +79,11 @@ type ApiHardwareItem = {
   assignedTo?: string | null;
 };
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
 const tokenStorageKey = 'hardwareHub.jwt';
 
 export const config = {
-  apiUrl,
+  apiUrl: apiBaseUrl,
   tokenStorageKey,
 };
 
@@ -99,6 +99,11 @@ export class ApiError extends Error {
 
 function getStoredToken(): string | null {
   return localStorage.getItem(tokenStorageKey);
+}
+
+function apiUrl(path: string): string {
+  const endpointPath = path.startsWith('/') ? path : `/${path}`;
+  return `${apiBaseUrl}${endpointPath}`;
 }
 
 export const tokenStore = {
@@ -190,7 +195,7 @@ async function request<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${apiUrl}${path}`, {
+    response = await fetch(apiUrl(path), {
       method: options.method ?? 'GET',
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -213,7 +218,7 @@ async function request<T>(
 
 export async function getHealth(): Promise<HealthResult> {
   try {
-    const response = await fetch(`${apiUrl}/health`);
+    const response = await fetch(apiUrl('/health'));
     const contentType = response.headers.get('content-type') ?? '';
     const body = contentType.includes('application/json')
       ? await response.json()
