@@ -21,6 +21,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -41,6 +42,7 @@ button:disabled {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   border: 1px solid #c8d1dc;
@@ -153,6 +155,36 @@ pre {
   background: #2f3a48;
 }
 
+.session-card {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.session-card strong {
+  overflow-wrap: anywhere;
+}
+
+.role-pill,
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.role-pill {
+  background: #e8f1fb;
+  color: #174c83;
+  padding: 0.4rem 0.55rem;
+  text-transform: uppercase;
+}
+
 .health-panel {
   display: grid;
   gap: 0.25rem;
@@ -191,6 +223,10 @@ pre {
   gap: 1rem;
 }
 
+.login-view {
+  max-width: 680px;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -219,6 +255,91 @@ pre {
   gap: 0.75rem;
 }
 
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(150px, 1fr)) auto;
+  align-items: end;
+  gap: 1rem;
+}
+
+.error-banner,
+.empty-state {
+  margin: 0;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.error-banner {
+  border: 1px solid #d99292;
+  background: #fff5f5;
+  color: #8b2323;
+}
+
+.empty-state {
+  border: 1px solid #d7dee8;
+  background: #f7fafc;
+  color: #526070;
+}
+
+.table-shell {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #d7dee8;
+  padding: 0.85rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #526070;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+td strong {
+  color: #18202a;
+}
+
+.status-pill {
+  background: #eef2f6;
+  color: #334155;
+  padding: 0.45rem 0.6rem;
+}
+
+.status-available {
+  background: #e6f7ec;
+  color: #17603a;
+}
+
+.status-in-use {
+  background: #fff4d6;
+  color: #74510b;
+}
+
+.status-repair {
+  background: #fde9e9;
+  color: #8b2323;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.row-actions button {
+  min-width: 5.5rem;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -240,5 +361,47 @@ pre {
 
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+
+  table {
+    min-width: 0;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    border: 1px solid #d7dee8;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 0.75rem;
+    border-bottom: 0;
+    padding: 0.45rem 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: #526070;
+    font-weight: 800;
   }
 }

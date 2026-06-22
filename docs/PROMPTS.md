@@ -166,3 +166,17 @@ Added a maintainable CSS baseline and a `GET /health` check wired through
 Verification: ran `npm.cmd run build`; the Vue type check and Vite production
 build passed. Started the frontend locally and confirmed
 `http://localhost:5173/` returned `200`.
+
+### Prompt
+
+Summary: Implement frontend login and the hardware dashboard.
+
+Outcome: Added a typed API client using `VITE_API_URL`, JWT storage in
+`localStorage`, session restore with current user role, and a working login
+screen. Replaced the placeholder dashboard with hardware loading, status/brand
+and text filters, name/purchase-date sorting, displayed assignment fields, and
+rent/return buttons that call the backend and refresh the list.
+
+Verification: ran `npm run build`, checked the running backend API, verified
+admin and regular user login, exercised hardware list loading, filters,
+sorting, and a rent/return flow through the UI.

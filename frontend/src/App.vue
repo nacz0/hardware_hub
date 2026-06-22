@@ -1,39 +1,47 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { config, getHealth, type HealthResult } from './api';
-import AdminView from './views/AdminView.vue';
-import AiAuditorView from './views/AiAuditorView.vue';
+import { onMounted, ref } from 'vue';
+import { config, getCurrentUser, getHealth, tokenStore, type CurrentUser, type HealthResult } from './api';
 import DashboardView from './views/DashboardView.vue';
 import LoginView from './views/LoginView.vue';
 
-type ViewKey = 'login' | 'dashboard' | 'admin' | 'ai-auditor';
-
-const activeView = ref<ViewKey>('login');
 const health = ref<HealthResult | null>(null);
 const isCheckingHealth = ref(false);
+const currentUser = ref<CurrentUser | null>(null);
+const sessionError = ref('');
+const isRestoringSession = ref(false);
 
-const views: Array<{ key: ViewKey; label: string }> = [
-  { key: 'login', label: 'Login' },
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'admin', label: 'Admin' },
-  { key: 'ai-auditor', label: 'AI Auditor' },
-];
+onMounted(async () => {
+  const token = tokenStore.get();
+  if (!token) {
+    return;
+  }
 
-const activeComponent = computed(() => {
-  const components = {
-    login: LoginView,
-    dashboard: DashboardView,
-    admin: AdminView,
-    'ai-auditor': AiAuditorView,
-  };
-
-  return components[activeView.value];
+  isRestoringSession.value = true;
+  try {
+    currentUser.value = await getCurrentUser(token);
+  } catch (error) {
+    tokenStore.clear();
+    sessionError.value =
+      error instanceof Error ? error.message : 'Stored session could not be restored.';
+  } finally {
+    isRestoringSession.value = false;
+  }
 });
 
 async function checkHealth() {
   isCheckingHealth.value = true;
   health.value = await getHealth();
   isCheckingHealth.value = false;
+}
+
+function handleLogin(user: CurrentUser) {
+  sessionError.value = '';
+  currentUser.value = user;
+}
+
+function logout() {
+  tokenStore.clear();
+  currentUser.value = null;
 }
 </script>
 
@@ -45,18 +53,12 @@ async function checkHealth() {
         <h1>Operations Console</h1>
       </div>
 
-      <nav class="nav-list" aria-label="Main views">
-        <button
-          v-for="view in views"
-          :key="view.key"
-          class="nav-button"
-          :class="{ active: activeView === view.key }"
-          type="button"
-          @click="activeView = view.key"
-        >
-          {{ view.label }}
-        </button>
-      </nav>
+      <div v-if="currentUser" class="session-card">
+        <span class="label">Signed in</span>
+        <strong>{{ currentUser.email }}</strong>
+        <span class="role-pill">{{ currentUser.role }}</span>
+        <button class="secondary-button" type="button" @click="logout">Log out</button>
+      </div>
     </aside>
 
     <main class="main-content">
@@ -77,7 +79,11 @@ async function checkHealth() {
         <pre v-if="health.body">{{ health.body }}</pre>
       </section>
 
-      <component :is="activeComponent" />
+      <p v-if="sessionError" class="error-banner">{{ sessionError }}</p>
+      <p v-if="isRestoringSession" class="empty-state">Restoring session...</p>
+
+      <DashboardView v-else-if="currentUser" :current-user="currentUser" />
+      <LoginView v-else @login="handleLogin" />
     </main>
   </div>
 </template>
