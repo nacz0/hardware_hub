@@ -155,6 +155,10 @@ pre {
   background: #2f3a48;
 }
 
+.danger-button {
+  background: #a33232;
+}
+
 .session-card {
   display: grid;
   gap: 0.75rem;
@@ -263,6 +267,7 @@ pre {
 }
 
 .error-banner,
+.success-banner,
 .empty-state {
   margin: 0;
   border-radius: 8px;
@@ -273,6 +278,12 @@ pre {
   border: 1px solid #d99292;
   background: #fff5f5;
   color: #8b2323;
+}
+
+.success-banner {
+  border: 1px solid #7ab88c;
+  background: #f1fbf4;
+  color: #17603a;
 }
 
 .empty-state {
@@ -340,6 +351,61 @@ td strong {
   min-width: 5.5rem;
 }
 
+.admin-view h3 {
+  margin: 0;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(320px, 1.15fr);
+  gap: 1rem;
+}
+
+.admin-panel {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.panel-note {
+  margin: 0.2rem 0 0;
+  color: #526070;
+  font-size: 0.9rem;
+}
+
+.created-users {
+  display: grid;
+  gap: 0.65rem;
+  border-top: 1px solid #d7dee8;
+  padding-top: 1rem;
+}
+
+.created-users ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.created-users li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.admin-table-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -365,6 +431,15 @@ td strong {
 
   .toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   table,

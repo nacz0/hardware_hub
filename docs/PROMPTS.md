@@ -180,3 +180,18 @@ rent/return buttons that call the backend and refresh the list.
 Verification: ran `npm run build`, checked the running backend API, verified
 admin and regular user login, exercised hardware list loading, filters,
 sorting, and a rent/return flow through the UI.
+
+### Prompt
+
+Summary: Implement the Vue admin panel.
+
+Outcome: Added typed frontend API helpers for admin-only user creation,
+hardware creation, hardware deletion, and marking hardware as `Repair`.
+Rendered `AdminView` only for users with the `admin` role, replaced the
+placeholder with simple forms and a hardware management table, refreshed
+hardware state after successful mutations, and surfaced clear success/error
+messages while still relying on backend authorization for security.
+
+Verification: ran `npm run build`; the Vue type check and Vite production
+build passed. Started the frontend locally on `http://localhost:5174/` because
+`5173` was already in use.

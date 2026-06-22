@@ -107,6 +107,8 @@ Expected coverage:
 - Admin-created accounts only
 - Dirty seed data preserved and flagged
 - Table-first UI
+- Backend does not currently expose a user-list endpoint, so the frontend only
+  shows user accounts created during the current admin session.
 
 ### Partial/Missing
 

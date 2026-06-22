@@ -26,6 +26,23 @@ export type HardwareItem = {
   assignedTo?: string | null;
 };
 
+export type CreateUserInput = {
+  email: string;
+  password: string;
+  role: 'admin' | 'user';
+};
+
+export type CreateHardwareInput = {
+  externalId?: number | null;
+  name: string;
+  brand?: string | null;
+  purchaseDate?: string | null;
+  status: 'Available' | 'In Use' | 'Repair';
+  notes?: string | null;
+  assignedTo?: string | null;
+  history?: string | null;
+};
+
 type ApiUser = {
   id: number;
   email: string;
@@ -225,6 +242,35 @@ export async function getCurrentUser(token?: string | null): Promise<CurrentUser
 export async function getHardware(): Promise<HardwareItem[]> {
   const hardware = await request<ApiHardwareItem[]>('/hardware');
   return hardware.map(normalizeHardware);
+}
+
+export async function createUserAccount(input: CreateUserInput): Promise<CurrentUser> {
+  const user = await request<ApiUser>('/admin/users', {
+    method: 'POST',
+    body: input,
+  });
+  return normalizeUser(user);
+}
+
+export async function createHardware(input: CreateHardwareInput): Promise<HardwareItem> {
+  const hardware = await request<ApiHardwareItem>('/hardware', {
+    method: 'POST',
+    body: input,
+  });
+  return normalizeHardware(hardware);
+}
+
+export async function deleteHardware(hardwareId: number): Promise<void> {
+  await request<null>(`/hardware/${hardwareId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function markHardwareRepair(hardwareId: number): Promise<HardwareItem> {
+  const hardware = await request<ApiHardwareItem>(`/hardware/${hardwareId}/repair`, {
+    method: 'POST',
+  });
+  return normalizeHardware(hardware);
 }
 
 export async function rentHardware(hardwareId: number): Promise<HardwareItem> {

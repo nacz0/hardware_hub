@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { config, getCurrentUser, getHealth, tokenStore, type CurrentUser, type HealthResult } from './api';
+import AdminView from './views/AdminView.vue';
 import DashboardView from './views/DashboardView.vue';
 import LoginView from './views/LoginView.vue';
 
@@ -9,6 +10,7 @@ const isCheckingHealth = ref(false);
 const currentUser = ref<CurrentUser | null>(null);
 const sessionError = ref('');
 const isRestoringSession = ref(false);
+const isAdmin = computed(() => currentUser.value?.role === 'admin');
 
 onMounted(async () => {
   const token = tokenStore.get();
@@ -82,7 +84,10 @@ function logout() {
       <p v-if="sessionError" class="error-banner">{{ sessionError }}</p>
       <p v-if="isRestoringSession" class="empty-state">Restoring session...</p>
 
-      <DashboardView v-else-if="currentUser" :current-user="currentUser" />
+      <template v-else-if="currentUser">
+        <DashboardView :current-user="currentUser" />
+        <AdminView v-if="isAdmin" />
+      </template>
       <LoginView v-else @login="handleLogin" />
     </main>
   </div>
