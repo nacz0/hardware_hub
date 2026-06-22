@@ -8,9 +8,13 @@ from pydantic import ValidationError
 
 from app.ai_audit_checks import has_damage_related_text
 from app.ai_audit_models import AUDIT_REPORT_SCHEMA, AuditReport
+from app.env import load_environment
 
 
 logger = logging.getLogger(__name__)
+
+
+load_environment()
 
 
 def minimize_inventory_for_ai(inventory: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -4,9 +4,13 @@ import sqlite3
 import bcrypt
 
 from app.database import get_connection
+from app.env import load_environment
 
 
 USER_ROLES = {"admin", "user"}
+
+
+load_environment()
 
 
 def initialize_users_table(connection: sqlite3.Connection) -> None:

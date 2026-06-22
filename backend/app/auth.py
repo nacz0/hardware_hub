@@ -6,7 +6,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import InvalidTokenError
 
+from app.env import load_environment
 from app.users import get_user_by_id
+
+
+load_environment()
 
 
 def get_jwt_secret() -> str:
