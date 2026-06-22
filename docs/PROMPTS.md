@@ -117,3 +117,37 @@ creation from the auth module.
 Correction: documented the convention in `docs/DECISIONS.md`: keep `main.py`
 tidy and split routes, auth, and business logic into focused modules when
 behavior grows.
+
+### Prompt
+
+Summary: Add critical backend pytest coverage for hardware rental rules and
+admin-only user creation.
+
+Outcome: Reworked `backend/tests/test_hardware_business.py` into six focused
+API-level tests covering repair/in-use/available rental behavior, invalid
+returns, regular-user denial for user creation, and admin user creation.
+Tests use a temporary SQLite database via `tmp_path`, create their own admin
+and regular user fixtures, avoid OpenAI API calls, and do not depend on the
+developer's local database or fixed seed rows.
+
+Verification: ran `pytest backend\tests`; all six tests passed.
+
+### Prompt
+
+Summary: Implement the backend AI Inventory Auditor feature.
+
+Outcome: Added admin-only `POST /ai/audit`. It loads inventory, runs
+deterministic data-quality checks, optionally calls OpenAI through the official
+Python SDK, and returns an advisory structured report without mutating records.
+
+Necessary corrections:
+
+- Use the OpenAI SDK, not raw HTTP.
+- Keep deterministic findings authoritative and redact sensitive inventory
+  fields before sending data to OpenAI.
+- Require admin access, handle dirty date values safely, and surface/log
+  deterministic fallback when OpenAI is unavailable.
+- Split the long auditor file into route, checks, OpenAI, report, and schema
+  modules.
+
+Verification: ran `pytest` from `backend/`; all 13 tests passed.
